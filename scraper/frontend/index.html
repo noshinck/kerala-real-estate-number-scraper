@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataHarvest - Extract Agent Data Instantly</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            overflow-x: hidden;
+            cursor: none;
+        }
+
+        /* Custom Cursor */
+        .cursor {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            mix-blend-mode: difference;
+            transition: transform 0.2s ease;
+        }
+
+        .cursor-follower {
+            width: 8px;
+            height: 8px;
+            background: #fff;
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            mix-blend-mode: difference;
+        }
+
+        /* Grid Background */
+        .grid-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+
+        /* Hero Section */
+        .hero {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            text-align: center;
+            opacity: 0;
+        }
+
+        .hero-title {
+            font-size: clamp(3rem, 10vw, 8rem);
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: -0.03em;
+            margin-bottom: 2rem;
+        }
+
+        .hero-title span {
+            display: block;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1rem, 2vw, 1.5rem);
+            font-weight: 300;
+            margin-bottom: 3rem;
+            opacity: 0.7;
+            letter-spacing: 0.1em;
+        }
+
+        .cta-button {
+            padding: 1.5rem 4rem;
+            background: #fff;
+            color: #0a0a0a;
+            text-decoration: none;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-radius: 0;
+            display: inline-block;
+            letter-spacing: 0.1em;
+            transition: all 0.3s ease;
+            border: 2px solid #fff;
+            cursor: pointer;
+        }
+
+        .cta-button:hover {
+            background: transparent;
+            color: #fff;
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+        }
+
+        .scroll-indicator span {
+            display: block;
+            width: 1px;
+            height: 60px;
+            background: linear-gradient(to bottom, transparent, #fff);
+            margin: 0 auto 10px;
+        }
+
+        .scroll-text {
+            font-size: 0.8rem;
+            letter-spacing: 0.2em;
+            font-weight: 300;
+        }
+
+        /* Tool Section */
+        .tool-section {
+            min-height: 100vh;
+            padding: 10vh 5vw;
+            position: relative;
+        }
+
+        .section-number {
+            font-size: 1rem;
+            letter-spacing: 0.2em;
+            font-weight: 300;
+            opacity: 0.5;
+            margin-bottom: 4rem;
+        }
+
+        .tool-container {
+            max-width: 800px;
+            margin: 0 auto;
+            opacity: 0;
+        }
+
+        .tool-title {
+            font-size: clamp(2rem, 5vw, 4rem);
+            font-weight: 600;
+            margin-bottom: 3rem;
+            letter-spacing: -0.02em;
+        }
+
+        .form-group {
+            margin-bottom: 3rem;
+        }
+
+        .form-label {
+            font-size: 0.85rem;
+            letter-spacing: 0.2em;
+            font-weight: 300;
+            margin-bottom: 1rem;
+            display: block;
+            opacity: 0.5;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 1.5rem;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: #fff;
+        }
+
+        .form-select {
+            cursor: pointer;
+        }
+
+        .extract-button {
+            width: 100%;
+            padding: 1.8rem;
+            background: #fff;
+            color: #0a0a0a;
+            border: 2px solid #fff;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 2rem;
+        }
+
+        .extract-button:hover {
+            background: transparent;
+            color: #fff;
+        }
+
+        .extract-button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* Progress Section */
+        .progress-section {
+            display: none;
+            margin-top: 4rem;
+            opacity: 0;
+        }
+
+        .progress-section.active {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 2px;
+            background: rgba(255,255,255,0.1);
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #fff;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .progress-status {
+            text-align: center;
+            font-size: 1rem;
+            font-weight: 300;
+            letter-spacing: 0.1em;
+            opacity: 0.7;
+        }
+
+        /* Results Section */
+        .results-section {
+            display: none;
+            min-height: 100vh;
+            padding: 10vh 5vw;
+            opacity: 0;
+        }
+
+        .results-section.active {
+            display: block;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4rem;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        .results-title {
+            font-size: clamp(2rem, 5vw, 4rem);
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .download-button {
+            padding: 1.2rem 3rem;
+            background: transparent;
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.3);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .download-button:hover {
+            background: #fff;
+            color: #0a0a0a;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+
+        .stat-item {
+            padding: 2rem 0;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .stat-number {
+            font-size: clamp(3rem, 6vw, 6rem);
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: -0.05em;
+            margin-bottom: 1rem;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            font-weight: 300;
+            opacity: 0.5;
+            letter-spacing: 0.2em;
+        }
+
+        .data-table {
+            width: 100%;
+            margin-top: 4rem;
+        }
+
+        .table-header {
+            font-size: 0.85rem;
+            letter-spacing: 0.2em;
+            font-weight: 300;
+            opacity: 0.5;
+            padding: 1.5rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .table-row {
+            padding: 2rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            transition: opacity 0.3s ease;
+        }
+
+        .table-row:hover {
+            opacity: 0.7;
+        }
+
+        .table-cell {
+            padding: 0.5rem 0;
+            font-size: 0.95rem;
+            font-weight: 300;
+        }
+
+        .table-cell.name {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        /* Features */
+        .features-section {
+            min-height: 100vh;
+            padding: 10vh 5vw;
+        }
+
+        .feature-item {
+            margin-bottom: 10vh;
+            opacity: 0;
+        }
+
+        .feature-number {
+            font-size: 1rem;
+            font-weight: 300;
+            margin-bottom: 1rem;
+            color: #666;
+        }
+
+        .feature-title {
+            font-size: clamp(2rem, 5vw, 4rem);
+            font-weight: 600;
+            margin-bottom: 1rem;
+            letter-spacing: -0.02em;
+        }
+
+        .feature-description {
+            font-size: clamp(1rem, 2vw, 1.3rem);
+            font-weight: 300;
+            opacity: 0.7;
+            max-width: 600px;
+            line-height: 1.6;
+        }
+
+        footer {
+            padding: 4rem 5vw;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            font-weight: 300;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            .cursor,
+            .cursor-follower {
+                display: none;
+            }
+
+            .results-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            footer {
+                flex-direction: column;
+                gap: 2rem;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="cursor"></div>
+    <div class="cursor-follower"></div>
+    <div class="grid-bg"></div>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">
+                <span>DataHarvest</span>
+            </h1>
+            <p class="hero-subtitle">EXTRACT · ORGANIZE · EXCEL</p>
+            <button class="cta-button" onclick="scrollToTool()">START EXTRACTING</button>
+        </div>
+        <div class="scroll-indicator">
+            <span></span>
+            <div class="scroll-text">SCROLL</div>
+        </div>
+    </section>
+
+    <!-- Tool Section -->
+    <section class="tool-section" id="toolSection">
+        <div class="section-number">01 — EXTRACT</div>
+        
+        <div class="tool-container">
+            <h2 class="tool-title">Configure Extraction</h2>
+            
+            <form id="extractionForm">
+                <div class="form-group">
+                    <label class="form-label">DATA SOURCE</label>
+                    <select class="form-select" id="dataSource" required>
+                        <option value="">Select source...</option>
+                        <option value="kerala-rera">Kerala RERA Agents</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">NUMBER OF RECORDS</label>
+                    <select class="form-select" id="recordLimit" required>
+                        <option value="10">10 Records</option>
+                        <option value="25">25 Records</option>
+                        <option value="50" selected>50 Records</option>
+                        <option value="100">100 Records</option>
+                        <option value="200">200 Records</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="extract-button" id="extractButton">
+                    EXTRACT DATA
+                </button>
+            </form>
+
+            <div class="progress-section" id="progressSection">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-status" id="progressStatus">INITIALIZING...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Results Section -->
+    <section class="results-section" id="resultsSection">
+        <div class="section-number">02 — RESULTS</div>
+        
+        <div class="results-header">
+            <h2 class="results-title">Extraction Complete</h2>
+            <button class="download-button" onclick="downloadData()">DOWNLOAD CSV</button>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-number" id="totalStat">0</div>
+                <div class="stat-label">TOTAL RECORDS</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="emailStat">0</div>
+                <div class="stat-label">WITH EMAIL</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="phoneStat">0</div>
+                <div class="stat-label">WITH PHONE</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="addressStat">0</div>
+                <div class="stat-label">WITH ADDRESS</div>
+            </div>
+        </div>
+
+        <div class="data-table">
+            <div class="table-header">
+                EXTRACTED DATA
+            </div>
+            <div id="dataTableBody"></div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section">
+        <div class="section-number">03 — FEATURES</div>
+        
+        <div class="feature-item">
+            <div class="feature-number">001</div>
+            <h2 class="feature-title">Real-time Extraction</h2>
+            <p class="feature-description">
+                Connect directly to live data sources. No downloads, no installations. Extract data instantly through your browser.
+            </p>
+        </div>
+
+        <div class="feature-item">
+            <div class="feature-number">002</div>
+            <h2 class="feature-title">Intelligent Parsing</h2>
+            <p class="feature-description">
+                Advanced algorithms automatically detect and extract names, emails, phone numbers, addresses, and social profiles.
+            </p>
+        </div>
+
+        <div class="feature-item">
+            <div class="feature-number">003</div>
+            <h2 class="feature-title">Clean Export</h2>
+            <p class="feature-description">
+                Download organized CSV files ready for immediate use. Import directly into Excel, CRM, or any data platform.
+            </p>
+        </div>
+    </section>
+
+    <footer>
+        <div>&copy; 2025 DataHarvest</div>
+        <div>Built for data professionals</div>
+    </footer>
+
+    <script>
+        gsap.registerPlugin(ScrollTrigger);
+
+        let extractedData = [];
+
+        // Custom Cursor
+        const cursor = document.querySelector('.cursor');
+        const cursorFollower = document.querySelector('.cursor-follower');
+        let mouseX = 0, mouseY = 0;
+        let followerX = 0, followerY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        function animateCursor() {
+            const distX = mouseX - followerX;
+            const distY = mouseY - followerY;
+            
+            followerX += distX * 0.1;
+            followerY += distY * 0.1;
+            
+            cursor.style.left = mouseX + 'px';
+            cursor.style.top = mouseY + 'px';
+            cursorFollower.style.left = followerX + 'px';
+            cursorFollower.style.top = followerY + 'px';
+            
+            requestAnimationFrame(animateCursor);
+        }
+        animateCursor();
+
+        document.querySelectorAll('button, select, a').forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                gsap.to(cursor, { scale: 2, duration: 0.3 });
+            });
+            el.addEventListener('mouseleave', () => {
+                gsap.to(cursor, { scale: 1, duration: 0.3 });
+            });
+        });
+
+        // Hero Animations
+        gsap.to('.hero-content', { opacity: 1, y: 0, duration: 1.5, delay: 0.3 });
+        gsap.to('.scroll-indicator', { opacity: 1, duration: 1, delay: 1 });
+        gsap.to('.scroll-indicator span', {
+            scaleY: 0,
+            transformOrigin: 'top',
+            duration: 1.5,
+            repeat: -1,
+            ease: 'power1.inOut'
+        });
+
+        // Tool Section Animation
+        gsap.to('.tool-container', {
+            opacity: 1,
+            y: 0,
+            duration: 1,
+            scrollTrigger: {
+                trigger: '.tool-section',
+                start: 'top 60%'
+            }
+        });
+
+        // Feature Animations
+        gsap.utils.toArray('.feature-item').forEach((item) => {
+            gsap.to(item, {
+                opacity: 1,
+                y: 0,
+                duration: 1,
+                scrollTrigger: {
+                    trigger: item,
+                    start: 'top 80%',
+                    end: 'top 30%',
+                    scrub: 1
+                }
+            });
+        });
+
+        // Scroll to tool
+        function scrollToTool() {
+            gsap.to(window, {
+                duration: 1.5,
+                scrollTo: '#toolSection',
+                ease: 'power3.inOut'
+            });
+        }
+
+        // Form Submission
+        document.getElementById('extractionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const source = document.getElementById('dataSource').value;
+            const limit = parseInt(document.getElementById('recordLimit').value);
+            
+            if (!source) {
+                alert('Please select a data source');
+                return;
+            }
+
+            await startExtraction(source, limit);
+        });
+
+        async function startExtraction(source, limit) {
+            const button = document.getElementById('extractButton');
+            const progressSection = document.getElementById('progressSection');
+            const resultsSection = document.getElementById('resultsSection');
+            
+            button.disabled = true;
+            button.textContent = 'EXTRACTING...';
+            
+            gsap.to(progressSection, { 
+                opacity: 1, 
+                display: 'block',
+                duration: 0.5 
+            });
+
+            // Call your backend API here
+            await extractData(source, limit);
+
+            button.disabled = false;
+            button.textContent = 'EXTRACT DATA';
+            
+            gsap.to(progressSection, { opacity: 0, duration: 0.5 });
+            gsap.to(resultsSection, { 
+                opacity: 1, 
+                display: 'block',
+                duration: 0.5,
+                onComplete: () => {
+                    gsap.to(window, {
+                        duration: 1,
+                        scrollTo: '#resultsSection',
+                        ease: 'power3.inOut'
+                    });
+                }
+            });
+
+            animateStats();
+        }
+
+        async function extractData(source, limit) {
+            const API_URL = 'http://localhost:5000/api/extract'; // Change to your deployed API URL
+            
+            // Show progress steps
+            const steps = [
+                { progress: 25, text: 'CONNECTING TO SOURCE...' },
+                { progress: 50, text: 'LOADING DATA...' },
+                { progress: 75, text: 'EXTRACTING RECORDS...' }
+            ];
+
+            // Animate progress
+            let stepIndex = 0;
+            const progressInterval = setInterval(() => {
+                if (stepIndex < steps.length) {
+                    const step = steps[stepIndex];
+                    document.getElementById('progressFill').style.width = step.progress + '%';
+                    document.getElementById('progressStatus').textContent = step.text;
+                    stepIndex++;
+                }
+            }, 1500);
+
+            try {
+                // Call backend API
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        source: source,
+                        limit: limit
+                    })
+                });
+
+                clearInterval(progressInterval);
+
+                if (!response.ok) {
+                    throw new Error('Extraction failed');
+                }
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    extractedData = result.data;
+                    document.getElementById('progressFill').style.width = '100%';
+                    document.getElementById('progressStatus').textContent = 'COMPLETE!';
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    displayResults();
+                } else {
+                    throw new Error(result.error || 'Unknown error');
+                }
+
+            } catch (error) {
+                clearInterval(progressInterval);
+                console.error('Error:', error);
+                alert('Extraction failed. Using sample data for demo. Error: ' + error.message);
+                // Fallback to sample data
+                generateSampleData(limit);
+            }
+        }
+
+        function generateSampleData(count) {
+            // This generates sample data - replace with real API response
+            extractedData = [];
+            
+            const firstNames = ['Rajesh', 'Priya', 'Amit', 'Sneha', 'Vijay', 'Lakshmi', 'Arjun', 'Deepa', 'Kiran', 'Maya'];
+            const lastNames = ['Kumar', 'Sharma', 'Patel', 'Nair', 'Menon', 'Iyer', 'Krishnan', 'Reddy', 'Singh', 'Gupta'];
+            const categories = ['Individual', 'Company', 'Partnership', 'Proprietorship'];
+            
+            for (let i = 0; i < count; i++) {
+                const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+                const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+                const name = `${firstName} ${lastName}`;
+                
+                extractedData.push({
+                    name: name,
+                    phone: `+91${Math.floor(Math.random() * 9000000000 + 1000000000)}`,
+                    email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@example.com`,
+                    address: `${Math.floor(Math.random() * 500)} MG Road, Ernakulam, Kerala ${Math.floor(Math.random() * 90000 + 600000)}`,
+                    category: categories[Math.floor(Math.random() * categories.length)]
+                });
+            }
+
+            displayResults();
+        }
+
+        function displayResults() {
+            // Update stats
+            document.getElementById('totalStat').textContent = extractedData.length;
+            document.getElementById('emailStat').textContent = extractedData.filter(r => r.email).length;
+            document.getElementById('phoneStat').textContent = extractedData.filter(r => r.phone).length;
+            document.getElementById('addressStat').textContent = extractedData.filter(r => r.address).length;
+
+            // Display table
+            const tableBody = document.getElementById('dataTableBody');
+            tableBody.innerHTML = '';
+
+            extractedData.forEach((record, index) => {
+                const row = document.createElement('div');
+                row.className = 'table-row';
+                row.innerHTML = `
+                    <div class="table-cell name">${record.name}</div>
+                    <div class="table-cell">${record.phone}</div>
+                    <div class="table-cell">${record.email}</div>
+                    <div class="table-cell">${record.address}</div>
+                    <div class="table-cell">${record.category}</div>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function animateStats() {
+            document.querySelectorAll('.stat-number').forEach(stat => {
+                const target = parseInt(stat.textContent);
+                gsap.to({ val: 0 }, {
+                    val: target,
+                    duration: 2,
+                    ease: 'power2.out',
+                    onUpdate: function() {
+                        stat.textContent = Math.ceil(this.targets()[0].val);
+                    }
+                });
+            });
+        }
+
+        function downloadData() {
+            if (extractedData.length === 0) return;
+
+            let csv = 'Name,Phone,Email,Address,Category\n';
+            extractedData.forEach(record => {
+                csv += `"${record.name}","${record.phone}","${record.email}","${record.address}","${record.category}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `dataharvest_${new Date().getTime()}.csv`;
+            link.click();
+        }
+
+        // Parallax Grid
+        gsap.to('.grid-bg', {
+            backgroundPosition: '50px 50px',
+            ease: 'none',
+            scrollTrigger: {
+                trigger: 'body',
+                start: 'top top',
+                end: 'bottom bottom',
+                scrub: 1
+            }
+        });
+    </script>
+</body>
+</html>
